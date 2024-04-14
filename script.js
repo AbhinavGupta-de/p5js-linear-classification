@@ -1,5 +1,8 @@
 let points = []; // Array to store points
 let lineCoefficients = {}; // Object to store coefficients of classification line
+let guessedLine = {}; // Object to store coefficients of guessed line
+let guessedLinePoints = []; // Array to store points of guessed line
+let isGuessed = false; // Boolean to check if the user has guessed the line
 
 function setup() {
 	createCanvas(800, 600);
@@ -8,31 +11,69 @@ function setup() {
 function draw() {
 	background(0);
 
-	// Draw points with color based on distance from the line
 	noStroke();
 	for (let point of points) {
 		let distance = calculateDistance(point);
-		let colorValue = map(distance, 0, height / 2, 255, 0); // Map distance to color value
-		fill(255 - colorValue, colorValue, colorValue / 10); // Green to red gradient
+		let colorValue = map(distance, 0, height / 2, 255, 0);
+		fill(255 - colorValue, colorValue, colorValue / 10);
 		ellipse(point.x, point.y, 10, 10);
 	}
 
-	// Calculate and draw classification line
 	if (points.length >= 15) {
 		calculateLine();
-		drawLine();
+		isGuessed = true;
+		guessLine();
 	}
+	noStroke();
+	fill(255);
+	textAlign(CENTER);
+	textSize(20);
+	let remainingPoints = 15 - points.length;
+	text(`Points remaining: ${remainingPoints}`, width / 2, height - 20);
+}
+
+function guessLine() {
+	if (guessedLinePoints.length < 2) {
+		return;
+	}
+
+	let x1 = guessedLinePoints[0].x;
+	let y1 = guessedLinePoints[0].y;
+	let x2 = guessedLinePoints[1].x;
+	let y2 = guessedLinePoints[1].y;
+	let m = (y2 - y1) / (x2 - x1);
+	let b = y1 - m * x1;
+	guessedLine.m = m;
+	guessedLine.b = b;
+
+	stroke(0, 0, 255);
+	strokeWeight(2);
+	line(x1, y1, x2, y2);
+
+	drawLine();
+
+	// now we will display score of the user based on how well the user guessed the line
+	// we will calculate teh score by (y_intercept^2 + slope^2)_original - (y_intercept^2 + slope^2)_guessed
+	let score = Math.abs(
+		lineCoefficients.b * lineCoefficients.b +
+			lineCoefficients.m * lineCoefficients.m -
+			(guessedLine.b * guessedLine.b + guessedLine.m * guessedLine.m)
+	);
+	noStroke();
+	textSize(20);
+	text(`Score: ${score}`, width / 2, height - 50);
 }
 
 function mousePressed() {
-	// Insert point at mouse coordinates
 	let point = createVector(mouseX, mouseY);
-	points.push(point);
+	if (isGuessed) {
+		guessedLinePoints.push(point);
+	} else {
+		points.push(point);
+	}
 }
 
 function calculateLine() {
-	// Calculate coefficients of classification line using linear regression
-
 	let xSum = 0;
 	let ySum = 0;
 	let xySum = 0;
@@ -54,7 +95,6 @@ function calculateLine() {
 }
 
 function drawLine() {
-	// Draw classification line
 	stroke(255, 0, 0);
 	strokeWeight(2);
 	let x1 = 0;
@@ -65,7 +105,6 @@ function drawLine() {
 }
 
 function calculateDistance(point) {
-	// Calculate distance of a point from the classification line using the formula for the distance of a point from a line
 	let numerator = abs(
 		lineCoefficients.m * point.x - point.y + lineCoefficients.b
 	);
