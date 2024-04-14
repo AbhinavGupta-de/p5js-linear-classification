@@ -52,16 +52,18 @@ function guessLine() {
 
 	drawLine();
 
-	// now we will display score of the user based on how well the user guessed the line
-	// we will calculate teh score by (y_intercept^2 + slope^2)_original - (y_intercept^2 + slope^2)_guessed
-	let score = Math.abs(
-		lineCoefficients.b * lineCoefficients.b +
-			lineCoefficients.m * lineCoefficients.m -
-			(guessedLine.b * guessedLine.b + guessedLine.m * guessedLine.m)
-	);
-	noStroke();
-	textSize(20);
-	text(`Score: ${score}`, width / 2, height - 50);
+	if (guessedLine.m !== undefined && guessedLine.b !== undefined) {
+		let score = Math.sqrt(
+			Math.abs(
+				Math.pow(lineCoefficients.b - guessedLine.b, 2) -
+					Math.pow(lineCoefficients.m - guessedLine.m, 2)
+			)
+		);
+
+		noStroke();
+		textSize(20);
+		text(`Score: ${score}`, width / 2, height - 50);
+	}
 }
 
 function mousePressed() {
